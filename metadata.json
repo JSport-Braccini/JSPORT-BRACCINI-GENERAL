@@ -1,0 +1,8 @@
+{
+  "name": "JSPORT Scoreboard & Tournament Manager",
+  "description": "A comprehensive volleyball management system featuring advanced scoring consoles, coach rotation tools, tournament fixtures, and live broadcast overlays.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
