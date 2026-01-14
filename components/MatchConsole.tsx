@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Match, Player, Team, OverlayType } from '../types';
+import { Match, Player, OverlayType } from '../types';
 
 interface MatchConsoleProps {
   match: Match;
@@ -9,182 +9,168 @@ interface MatchConsoleProps {
 }
 
 export const MatchConsole: React.FC<MatchConsoleProps> = ({ match, onUpdateMatch, onGoToLive }) => {
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [scoringTeam, setScoringTeam] = useState<'A' | 'B' | null>(null);
 
-  const handleScore = (team: 'A' | 'B', type: 'ATTACK' | 'BLOCK' | 'SERVE' | 'ERROR', specificPlayer?: Player) => {
+  const handleScore = (team: 'A' | 'B', playerId: string, type: 'ATTACK' | 'BLOCK' | 'SERVE' | 'ERROR') => {
     const updatedMatch = { ...match };
     const setIdx = updatedMatch.currentSet - 1;
-    
-    if (!updatedMatch.sets[setIdx]) {
-      updatedMatch.sets[setIdx] = { teamAScore: 0, teamBScore: 0 };
+    if (!updatedMatch.sets[setIdx]) updatedMatch.sets[setIdx] = { teamAScore: 0, teamBScore: 0 };
+
+    if (type !== 'ERROR') {
+      if (team === 'A') updatedMatch.sets[setIdx].teamAScore += 1;
+      else updatedMatch.sets[setIdx].teamBScore += 1;
+    } else {
+      if (team === 'A') updatedMatch.sets[setIdx].teamBScore += 1;
+      else updatedMatch.sets[setIdx].teamAScore += 1;
     }
 
-    if (team === 'A') updatedMatch.sets[setIdx].teamAScore += 1;
-    else updatedMatch.sets[setIdx].teamBScore += 1;
+    const targetTeam = team === 'A' ? updatedMatch.teamA : updatedMatch.teamB;
+    const player = targetTeam.players.find(p => p.id === playerId);
+    if (player) {
+      if (type === 'ATTACK') player.stats.attacks += 1;
+      if (type === 'BLOCK') player.stats.blocks += 1;
+      if (type === 'SERVE') player.stats.aces += 1;
+      if (type === 'ERROR') player.stats.errors += 1;
+      if (type !== 'ERROR') player.stats.totalPoints += 1;
+    }
 
     updatedMatch.lastPointType = type;
-    updatedMatch.lastPointTeam = team;
-
-    const playerToCredit = specificPlayer || selectedPlayer;
-    if (playerToCredit) {
-      const activeTeam = team === 'A' ? updatedMatch.teamA : updatedMatch.teamB;
-      const player = activeTeam.players.find(p => p.id === playerToCredit.id);
-      if (player) {
-        if (type === 'ATTACK') player.stats.attacks++;
-        if (type === 'BLOCK') player.stats.blocks++;
-        if (type === 'SERVE') player.stats.aces++;
-        if (type === 'ERROR') player.stats.errors++;
-        player.stats.totalPoints++;
-      }
-    }
-
-    onUpdateMatch({ ...updatedMatch });
-    setSelectedPlayer(null);
-  };
-
-  const handleTimeout = (team: 'A' | 'B') => {
-    const updated = { ...match };
-    if (team === 'A' && updated.timeoutsA > 0) updated.timeoutsA--;
-    else if (team === 'B' && updated.timeoutsB > 0) updated.timeoutsB--;
-    onUpdateMatch(updated);
-  };
-
-  const handleSubstitution = (team: 'A' | 'B') => {
-    const updated = { ...match };
-    if (team === 'A' && updated.subsA > 0) updated.subsA--;
-    else if (team === 'B' && updated.subsB > 0) updated.subsB--;
-    onUpdateMatch(updated);
+    updatedMatch.lastPointTeam = type === 'ERROR' ? (team === 'A' ? 'B' : 'A') : team;
+    updatedMatch.lastPointPlayerId = playerId;
+    
+    onUpdateMatch(updatedMatch);
+    setScoringTeam(null);
   };
 
   const setOverlay = (overlay: OverlayType) => {
-    const updated = { ...match, activeOverlay: overlay };
-    onUpdateMatch(updated);
-    
-    if (overlay.startsWith('HAWK_EYE') || overlay.includes('_POINT')) {
-      setTimeout(() => {
-        onUpdateMatch({ ...updated, activeOverlay: 'NONE' });
-      }, 5000);
-    }
+    onUpdateMatch({ ...match, activeOverlay: overlay === match.activeOverlay ? 'NONE' : overlay });
   };
 
-  const renderRotationGrid = (team: Team, rotationIds: string[]) => (
-    <div className="grid grid-cols-3 gap-1.5 bg-slate-900/40 p-2 rounded-xl border border-white/5">
-       {[1, 6, 5, 2, 3, 4].map((pos, idx) => {
-         const pId = rotationIds[idx];
-         const p = team.players.find(pl => pl.id === pId);
-         const isSelected = selectedPlayer?.id === p?.id;
-         return (
-           <button 
-             key={pos} 
-             onClick={() => p && setSelectedPlayer(p)}
-             className={`relative aspect-square rounded-xl flex flex-col items-center justify-center border transition-all active:scale-95 ${
-               p ? (isSelected ? 'bg-indigo-600 border-white shadow-lg' : 'bg-slate-950 border-white/5') : 'bg-slate-950/20'
-             }`}
-           >
-              {p ? (
-                <>
-                  <img src={p.imageUrl} crossOrigin="anonymous" className="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover mb-0.5" />
-                  <span className="text-[7px] md:text-[8px] uppercase text-white font-black truncate w-full px-1">{p.name.split(' ')[0]}</span>
-                </>
-              ) : <span className="text-[8px] text-slate-800">P{pos}</span>}
-           </button>
-         );
-       })}
-    </div>
-  );
+  const getRotationPlayers = (team: 'A' | 'B') => {
+    const ids = team === 'A' ? match.rotationA : match.rotationB;
+    const players = team === 'A' ? match.teamA.players : match.teamB.players;
+    if (!ids || ids.length === 0) return players.slice(0, 6);
+    return ids.map(id => players.find(p => p.id === id)).filter(Boolean) as Player[];
+  };
+
+  const handleConfigChange = (key: keyof Match, value: any) => {
+    onUpdateMatch({ ...match, [key]: value });
+  };
 
   return (
-    <div className="bg-[#020617] min-h-full p-3 md:p-4 flex flex-col gap-3 md:gap-4 overflow-x-hidden">
-      {/* Marcador Horizontal Optimizado para Móvil */}
-      <div className="bg-[#101a6b] rounded-2xl md:rounded-[2rem] p-3 md:p-4 flex items-center justify-between shadow-2xl border border-white/10 relative overflow-hidden h-24 md:h-32">
-          <div className="flex flex-col items-center flex-1">
-             <div className="flex items-center gap-1 md:gap-2 mb-1">
-                <img src={match.teamA.logoUrl} crossOrigin="anonymous" className="w-6 h-6 md:w-8 md:h-8 object-contain bg-white p-0.5 rounded shadow-sm" />
-                <h2 className="text-[10px] md:text-sm font-black italic uppercase text-white leading-none truncate max-w-[60px] md:max-w-none">{match.teamA.name}</h2>
-             </div>
-             <div className="text-4xl md:text-6xl font-black italic tabular-nums text-white leading-none">{match.sets[match.currentSet - 1]?.teamAScore || 0}</div>
-          </div>
-
-          <div className="flex flex-col items-center px-4 md:px-6 border-x border-white/10 gap-1 shrink-0 bg-black/20 backdrop-blur-sm py-2 rounded-xl">
-             <div className="bg-[#ff4d4d] px-2 md:px-3 py-0.5 rounded text-white font-black text-[7px] md:text-[8px] uppercase italic tracking-widest leading-none">SET {match.currentSet}</div>
-             <div className="text-xs font-black text-white/20 italic">VS</div>
-             <div className="flex gap-2">
-                <button onClick={() => match.currentSet > 1 && onUpdateMatch({...match, currentSet: match.currentSet - 1})} className="p-1.5 bg-white/5 border border-white/10 rounded-lg text-white active:bg-white/20">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <button onClick={() => {
-                  const updated = { ...match, currentSet: match.currentSet + 1 };
-                  if (!updated.sets[updated.currentSet - 1]) updated.sets.push({ teamAScore: 0, teamBScore: 0 });
-                  onUpdateMatch(updated);
-                }} className="p-1.5 bg-white/5 border border-white/10 rounded-lg text-white active:bg-white/20">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M9 5l7 7-7 7"/></svg>
-                </button>
-             </div>
-          </div>
-
-          <div className="flex flex-col items-center flex-1">
-             <div className="flex items-center gap-1 md:gap-2 mb-1 text-right">
-                <h2 className="text-[10px] md:text-sm font-black italic uppercase text-white leading-none truncate max-w-[60px] md:max-w-none">{match.teamB.name}</h2>
-                <img src={match.teamB.logoUrl} crossOrigin="anonymous" className="w-6 h-6 md:w-8 md:h-8 object-contain bg-white p-0.5 rounded shadow-sm" />
-             </div>
-             <div className="text-4xl md:text-6xl font-black italic tabular-nums text-white leading-none">{match.sets[match.currentSet - 1]?.teamBScore || 0}</div>
-          </div>
+    <div className="bg-[#020617] min-h-full p-4 flex flex-col gap-4 overflow-y-auto pb-24">
+      {/* Configuración de Partido */}
+      <div className="bg-slate-900/80 p-4 rounded-3xl border border-white/5 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">MEJOR DE (SETS)</label>
+          <select 
+            value={match.maxSets} 
+            onChange={(e) => handleConfigChange('maxSets', parseInt(e.target.value))}
+            className="bg-black text-white p-3 rounded-xl text-xs font-bold border border-white/10 outline-none focus:border-indigo-500"
+          >
+            <option value={3}>3 Sets</option>
+            <option value={5}>5 Sets</option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">PUNTOS POR SET</label>
+          <input 
+            type="number" 
+            value={match.pointsPerSet} 
+            onChange={(e) => handleConfigChange('pointsPerSet', parseInt(e.target.value))}
+            className="bg-black text-white p-3 rounded-xl text-xs font-bold border border-white/10 outline-none focus:border-indigo-500"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">PUNTOS TIE-BREAK</label>
+          <input 
+            type="number" 
+            value={match.decidingSetPoints} 
+            onChange={(e) => handleConfigChange('decidingSetPoints', parseInt(e.target.value))}
+            className="bg-black text-white p-3 rounded-xl text-xs font-bold border border-white/10 outline-none focus:border-indigo-500"
+          />
+        </div>
       </div>
 
-      {/* Paneles de Acción */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 flex-1">
+      {/* Marcador Principal */}
+      <div className="bg-[#101a6b] rounded-[2.5rem] p-6 flex items-center justify-between shadow-2xl border border-white/10 relative overflow-hidden">
+        <div className="text-center flex-1">
+          <p className="text-white/40 text-[10px] font-black uppercase mb-1 tracking-widest truncate">{match.teamA.name}</p>
+          <div className="text-5xl md:text-7xl font-black italic text-white">{match.sets[match.currentSet - 1]?.teamAScore || 0}</div>
+        </div>
         
-        {/* Lado Equipo A */}
-        <div className="bg-slate-900/40 p-3 rounded-2xl border border-white/5 flex flex-col gap-3 shadow-xl">
-           <div className="flex justify-between items-center border-b border-white/5 pb-2">
-              <span className="text-[9px] font-black text-indigo-400 uppercase italic tracking-widest">EQUIPO A</span>
-              <div className="flex gap-2">
-                 <button onClick={() => handleTimeout('A')} disabled={match.timeoutsA === 0} className={`px-2 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all active:scale-95 ${match.timeoutsA > 0 ? 'bg-yellow-600 shadow-lg shadow-yellow-600/20' : 'bg-slate-800 text-slate-600 opacity-50'}`}>T.O ({match.timeoutsA})</button>
-                 <button onClick={() => handleSubstitution('A')} disabled={match.subsA === 0} className={`px-2 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all active:scale-95 ${match.subsA > 0 ? 'bg-white text-black shadow-lg shadow-white/20' : 'bg-slate-800 text-slate-600 opacity-50'}`}>CAMBIO ({match.subsA})</button>
+        <div className="px-4 md:px-8 flex flex-col items-center gap-4">
+           <div className="bg-red-600 px-5 py-1 rounded-full text-[10px] font-black italic shadow-lg">SET {match.currentSet}</div>
+           <div className="flex gap-2">
+              <button onClick={() => setScoringTeam('A')} className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl text-2xl font-black bg-white text-indigo-900 shadow-xl active:scale-95 transition-all ${scoringTeam === 'A' ? 'ring-4 ring-indigo-400' : ''}`}>+</button>
+              <button onClick={() => setScoringTeam('B')} className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl text-2xl font-black bg-white text-indigo-900 shadow-xl active:scale-95 transition-all ${scoringTeam === 'B' ? 'ring-4 ring-indigo-400' : ''}`}>+</button>
+           </div>
+        </div>
+
+        <div className="text-center flex-1">
+          <p className="text-white/40 text-[10px] font-black uppercase mb-1 tracking-widest truncate">{match.teamB.name}</p>
+          <div className="text-5xl md:text-7xl font-black italic text-white">{match.sets[match.currentSet - 1]?.teamBScore || 0}</div>
+        </div>
+      </div>
+
+      {/* Selector de Jugador para Punto */}
+      {scoringTeam && (
+        <div className="bg-slate-900 p-5 rounded-[2rem] border-2 border-indigo-500 animate-pop shadow-2xl">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-black italic uppercase text-indigo-400 text-xs">Punto para {scoringTeam === 'A' ? match.teamA.name : match.teamB.name}</h3>
+            <button onClick={() => setScoringTeam(null)} className="text-slate-500 font-black text-xs px-2">CANCELAR</button>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            {getRotationPlayers(scoringTeam).map(p => (
+              <button key={p.id} onClick={() => handleScore(scoringTeam, p.id, 'ATTACK')} className="bg-indigo-600/20 border border-indigo-500/30 p-2 rounded-xl flex flex-col items-center gap-1 hover:bg-indigo-600 transition-all">
+                <img src={p.imageUrl} className="w-8 h-8 rounded-full object-cover" />
+                <span className="text-[8px] font-black text-white italic truncate w-full text-center">#{p.number}</span>
+              </button>
+            ))}
+            <button onClick={() => handleScore(scoringTeam === 'A' ? 'B' : 'A', 'error', 'ERROR')} className="bg-red-600/20 border border-red-500/30 p-2 rounded-xl flex flex-col items-center justify-center">
+              <span className="text-red-500 text-[9px] font-black uppercase">ERROR</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Control de Transmisión */}
+      <div className="bg-slate-900/80 p-6 rounded-[2.5rem] border border-white/5 flex flex-col gap-4 shadow-xl">
+           <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">CONSOLA DE TRANSMISIÓN</h4>
+           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { id: 'MINIBUG', label: 'MINIBUG', icon: 'M' },
+                { id: 'TICKER_BOTTOM', label: 'TICKER INF', icon: '—' },
+                { id: 'STATS_MATCH', label: 'ESTADÍSTICA', icon: '📊' },
+                { id: 'ROTATION_VIEW', label: 'ROTACIÓN', icon: '🔄' }
+              ].map(ov => (
+                <button 
+                  key={ov.id}
+                  onClick={() => setOverlay(ov.id as OverlayType)} 
+                  className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${match.activeOverlay === ov.id ? 'bg-indigo-600 border-white scale-105 shadow-lg' : 'bg-black border-white/5 hover:bg-slate-800'}`}
+                >
+                   <span className="text-xl">{ov.icon}</span>
+                   <span className="text-[8px] font-black uppercase tracking-widest">{ov.label}</span>
+                </button>
+              ))}
+           </div>
+           
+           <div className="grid grid-cols-3 gap-2">
+              <button onClick={() => {
+                onUpdateMatch({...match, activeOverlay: 'HAWK_EYE_SCAN'});
+                setTimeout(() => onUpdateMatch({...match, activeOverlay: 'HAWK_EYE_RESULT', hawkEyeResult: Math.random() > 0.5 ? 'IN' : 'OUT'}), 2000);
+                setTimeout(() => onUpdateMatch({...match, activeOverlay: 'NONE'}), 5000);
+              }} className="bg-yellow-600 p-3 rounded-xl text-[9px] font-black uppercase italic shadow-lg hover:bg-yellow-500">OJO HALCÓN</button>
+              <button onClick={() => setOverlay('SET_POINT')} className={`p-3 rounded-xl text-[9px] font-black uppercase italic shadow-lg transition-all ${match.activeOverlay === 'SET_POINT' ? 'bg-orange-600 border-white' : 'bg-orange-600/20 border-orange-500/30 text-orange-500'}`}>SET POINT</button>
+              <button onClick={() => setOverlay('MATCH_POINT')} className={`p-3 rounded-xl text-[9px] font-black uppercase italic shadow-lg transition-all ${match.activeOverlay === 'MATCH_POINT' ? 'bg-red-700 border-white' : 'bg-red-700/20 border-red-500/30 text-red-500'}`}>MATCH POINT</button>
+           </div>
+
+           <button onClick={onGoToLive} className="w-full bg-white text-black rounded-2xl py-4 flex items-center justify-center gap-3 shadow-xl hover:bg-indigo-50 font-black text-[10px] uppercase tracking-widest">
+              <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-white">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
               </div>
-           </div>
-           <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => handleScore('A', 'SERVE')} className="py-3 bg-emerald-600/10 text-emerald-400 border border-emerald-500/20 rounded-xl text-[9px] font-black uppercase active:bg-emerald-600 active:text-white transition-all">SAQUE</button>
-              <button onClick={() => handleScore('A', 'ATTACK')} className="py-3 bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 rounded-xl text-[9px] font-black uppercase active:bg-indigo-600 active:text-white transition-all">ATAQUE</button>
-              <button onClick={() => handleScore('A', 'BLOCK')} className="py-3 bg-blue-600/10 text-blue-400 border border-blue-500/20 rounded-xl text-[9px] font-black uppercase active:bg-blue-600 active:text-white transition-all">BLOQUEO</button>
-              <button onClick={() => handleScore('B', 'ERROR')} className="py-3 bg-red-600/10 text-red-400 border border-red-500/20 rounded-xl text-[9px] font-black uppercase active:bg-red-600 active:text-white transition-all">ERROR OP.</button>
-           </div>
-           {renderRotationGrid(match.teamA, match.rotationA)}
-        </div>
-
-        {/* Lado Equipo B */}
-        <div className="bg-slate-900/40 p-3 rounded-2xl border border-white/5 flex flex-col gap-3 shadow-xl">
-           <div className="flex justify-between items-center border-b border-white/5 pb-2">
-              <span className="text-[9px] font-black text-slate-500 uppercase italic tracking-widest">EQUIPO B</span>
-              <div className="flex gap-2">
-                 <button onClick={() => handleSubstitution('B')} disabled={match.subsB === 0} className={`px-2 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all active:scale-95 ${match.subsB > 0 ? 'bg-white text-black shadow-lg shadow-white/20' : 'bg-slate-800 text-slate-600 opacity-50'}`}>CAMBIO ({match.subsB})</button>
-                 <button onClick={() => handleTimeout('B')} disabled={match.timeoutsB === 0} className={`px-2 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all active:scale-95 ${match.timeoutsB > 0 ? 'bg-yellow-600 shadow-lg shadow-yellow-600/20' : 'bg-slate-800 text-slate-600 opacity-50'}`}>T.O ({match.timeoutsB})</button>
-              </div>
-           </div>
-           <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => handleScore('B', 'SERVE')} className="py-3 bg-emerald-600/10 text-emerald-400 border border-emerald-500/20 rounded-xl text-[9px] font-black uppercase active:bg-emerald-600 active:text-white transition-all">SAQUE</button>
-              <button onClick={() => handleScore('B', 'ATTACK')} className="py-3 bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 rounded-xl text-[9px] font-black uppercase active:bg-indigo-600 active:text-white transition-all">ATAQUE</button>
-              <button onClick={() => handleScore('B', 'BLOCK')} className="py-3 bg-blue-600/10 text-blue-400 border border-blue-500/20 rounded-xl text-[9px] font-black uppercase active:bg-blue-600 active:text-white transition-all">BLOQUEO</button>
-              <button onClick={() => handleScore('A', 'ERROR')} className="py-3 bg-red-600/10 text-red-400 border border-red-500/20 rounded-xl text-[9px] font-black uppercase active:bg-red-600 active:text-white transition-all">ERROR OP.</button>
-           </div>
-           {renderRotationGrid(match.teamB, match.rotationB)}
-        </div>
-
-        {/* Visuales / Broadcast - Movido al final en móvil */}
-        <div className="bg-slate-900/80 p-4 rounded-[2rem] border border-white/10 flex flex-col gap-3 md:col-span-2 lg:col-span-1 shadow-2xl">
-           <h4 className="text-[10px] font-black text-white uppercase tracking-widest border-b border-white/5 pb-2">BROADCAST OVERLAYS</h4>
-           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2">
-              <button onClick={() => setOverlay('MINIBUG')} className={`py-3 rounded-xl text-[9px] font-black uppercase border transition-all active:scale-95 ${match.activeOverlay === 'MINIBUG' ? 'bg-indigo-600 border-white shadow-lg shadow-indigo-600/30' : 'bg-slate-950 border-white/10 text-white/60'}`}>MINIBUG</button>
-              <button onClick={() => setOverlay('STATS_MATCH')} className={`py-3 rounded-xl text-[9px] font-black uppercase border transition-all active:scale-95 ${match.activeOverlay === 'STATS_MATCH' ? 'bg-indigo-600 border-white shadow-lg shadow-indigo-600/30' : 'bg-slate-950 border-white/10 text-white/60'}`}>STATS</button>
-              <button onClick={() => setOverlay('HAWK_EYE_IN')} className="py-3 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase active:bg-emerald-500 transition-all active:scale-95 shadow-lg shadow-emerald-600/20">HALCÓN IN</button>
-              <button onClick={() => setOverlay('HAWK_EYE_OUT')} className="py-3 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase active:bg-red-500 transition-all active:scale-95 shadow-lg shadow-red-600/20">HALCÓN OUT</button>
-              <button onClick={() => setOverlay('SET_POINT')} className="py-3 bg-yellow-500 text-black rounded-xl text-[9px] font-black uppercase active:bg-yellow-400 transition-all active:scale-95">SET POINT</button>
-              <button onClick={() => setOverlay('MATCH_POINT')} className="py-3 bg-orange-600 text-white rounded-xl text-[9px] font-black uppercase active:bg-orange-500 transition-all active:scale-95">MATCH PT</button>
-              <button onClick={() => setOverlay('NONE')} className="col-span-full py-3 bg-slate-950 text-red-500 border border-red-500/20 rounded-xl text-[9px] font-black uppercase active:bg-red-900 transition-all">OCULTAR TODOS</button>
-           </div>
-           <button onClick={onGoToLive} className="mt-2 py-4 bg-white text-black rounded-2xl font-black text-[10px] uppercase shadow-2xl active:scale-95 transition-all">ABRIR VISTA PREVIA VIVO</button>
-        </div>
-
+              IR AL VIVO (FULLSCREEN)
+           </button>
       </div>
     </div>
   );

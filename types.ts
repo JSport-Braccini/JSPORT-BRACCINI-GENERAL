@@ -38,7 +38,6 @@ export interface Team {
   delegate: string;
   players: Player[];
   captainId: string;
-  captainVideoUrl?: string;
 }
 
 export interface MatchSet {
@@ -50,18 +49,13 @@ export interface MatchSet {
 export type OverlayType = 
   | 'NONE' 
   | 'MINIBUG' 
-  | 'MARCADOR_FULL' 
+  | 'TICKER_BOTTOM'
   | 'STATS_MATCH' 
-  | 'STATS_PLAYER' 
-  | 'HAWK_EYE_IN' 
-  | 'HAWK_EYE_OUT'
-  | 'CAPTAIN_INTRO'
-  | 'WIN_PROBABILITY'
-  | 'PLAYER_COMPARE'
-  | 'STARTING_LINEUP'
-  | 'TIME_OUT'
+  | 'HAWK_EYE_SCAN'
+  | 'HAWK_EYE_RESULT'
   | 'SET_POINT'
-  | 'MATCH_POINT';
+  | 'MATCH_POINT'
+  | 'ROTATION_VIEW';
 
 export interface Match {
   id: string;
@@ -72,7 +66,7 @@ export interface Match {
   status: 'SCHEDULED' | 'LIVE' | 'FINISHED';
   date: string;
   time: string;
-  rotationA: string[];
+  rotationA: string[]; 
   rotationB: string[];
   timeoutsA: number;
   timeoutsB: number;
@@ -81,6 +75,11 @@ export interface Match {
   activeOverlay: OverlayType;
   lastPointType?: 'ATTACK' | 'BLOCK' | 'SERVE' | 'ERROR';
   lastPointTeam?: 'A' | 'B';
+  lastPointPlayerId?: string;
+  hawkEyeResult?: 'IN' | 'OUT';
+  maxSets: number; 
+  pointsPerSet: number; 
+  decidingSetPoints: number; 
 }
 
 export interface Group {
@@ -98,6 +97,7 @@ export interface Tournament {
   sponsors: Sponsor[];
   startDate?: string;
   location?: string;
+  syncId?: string;
 }
 
 export interface User {

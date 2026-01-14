@@ -46,7 +46,7 @@ export const MOCK_TEAM_B: Team = {
   ]
 };
 
-// Added missing 'time', 'activeOverlay', 'subsA', and 'subsB' properties to satisfy Match interface
+// Added missing 'time', 'activeOverlay', 'subsA', 'subsB', 'maxSets', 'pointsPerSet', and 'decidingSetPoints' properties to satisfy Match interface
 export const MOCK_MATCH: Match = {
   id: 'm1',
   teamA: MOCK_TEAM_A,
@@ -62,7 +62,11 @@ export const MOCK_MATCH: Match = {
   timeoutsB: 2,
   subsA: 6,
   subsB: 6,
-  activeOverlay: 'NONE'
+  activeOverlay: 'NONE',
+  // Fix: Added missing required configuration properties
+  maxSets: 3,
+  pointsPerSet: 25,
+  decidingSetPoints: 15
 };
 
 export const ROLE_CONFIG = {
