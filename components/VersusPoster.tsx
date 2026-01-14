@@ -76,9 +76,9 @@ export const VersusPoster: React.FC<VersusPosterProps> = ({ match, tournament, o
           {/* Contenido Central Superpuesto */}
           <div className="relative z-20 w-full h-full flex flex-col items-center justify-between py-10">
             <div className="flex flex-col items-center text-center">
-              <img src={tournament.logoUrl} crossOrigin="anonymous" className="h-16 md:h-20 w-auto object-contain drop-shadow-2xl mb-2" alt="Logo" />
-              <div className="bg-indigo-600 px-6 py-1 rounded-full border border-white/20 shadow-xl">
-                 <p className="text-white font-black text-[10px] uppercase tracking-[0.5em] italic">{tournament.name}</p>
+              <img src={tournament.logoUrl} crossOrigin="anonymous" className="h-24 md:h-36 w-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.6)] mb-2" alt="Logo" />
+              <div className="bg-indigo-600 px-6 py-1 rounded-full border border-white/20 shadow-xl mt-4">
+                 <p className="text-white font-black text-[10px] uppercase tracking-[0.5em] italic leading-none">{tournament.name}</p>
               </div>
             </div>
 
@@ -107,7 +107,7 @@ export const VersusPoster: React.FC<VersusPosterProps> = ({ match, tournament, o
                   <p className="text-white font-black text-xl italic tracking-widest uppercase leading-none">
                      {match.date} <span className="text-indigo-400 mx-2">|</span> {match.time} HS
                   </p>
-                  <p className="text-[9px] text-white/50 font-bold uppercase tracking-[0.3em] mt-2">PARTIDO OFICIAL - VNL STYLE</p>
+                  <p className="text-[9px] text-white/50 font-bold uppercase tracking-[0.3em] mt-2">PARTIDO OFICIAL - JSPORT</p>
                </div>
             </div>
 
@@ -132,12 +132,12 @@ export const VersusPoster: React.FC<VersusPosterProps> = ({ match, tournament, o
       </div>
       <style>{`
         .side-mask-left {
-          -webkit-mask-image: linear-gradient(to right, black 40%, transparent 95%), linear-gradient(to top, black 50%, transparent 100%);
+          -webkit-mask-image: linear-gradient(to right, black 30%, transparent 90%), linear-gradient(to top, black 40%, transparent 100%);
           -webkit-mask-composite: source-in;
           mask-composite: intersect;
         }
         .side-mask-right {
-          -webkit-mask-image: linear-gradient(to left, black 40%, transparent 95%), linear-gradient(to top, black 50%, transparent 100%);
+          -webkit-mask-image: linear-gradient(to left, black 30%, transparent 90%), linear-gradient(to top, black 40%, transparent 100%);
           -webkit-mask-composite: source-in;
           mask-composite: intersect;
         }
