@@ -8,6 +8,8 @@ import { LiveView } from './components/LiveView';
 import { AdminDashboard } from './views/AdminDashboard';
 import { Login } from './views/Login';
 import { HomeMenu } from './views/HomeMenu';
+import { StatsView } from './views/StatsView';
+import { UsersManagement } from './views/UsersManagement';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -116,13 +118,14 @@ const App: React.FC = () => {
                <h2 className="text-2xl font-black italic uppercase text-white text-center">SELECCIONAR PARTIDO PARA DIRIGIR</h2>
                <div className="grid grid-cols-1 gap-4">
                   {allMatches.map(m => (
-                    <button key={m.id} onClick={() => { setActiveMatch({ ...m, maxSets: m.maxSets || 3, pointsPerSet: m.pointsPerSet || 25, decidingSetPoints: m.decidingSetPoints || 15 }); }} className="bg-slate-900 border border-white/5 p-6 rounded-3xl flex items-center justify-between hover:border-indigo-500 transition-all">
+                    <button key={m.id} onClick={() => { setActiveMatch({ ...m, maxSets: m.maxSets || 3, pointsPerSet: m.pointsPerSet || 25, decidingSetPoints: m.decidingSetPoints || 15 }); }} className="bg-slate-900 border border-white/5 p-6 rounded-3xl flex items-center justify-between hover:border-indigo-500 transition-all text-left">
                        <div className="flex items-center gap-4">
-                          <img src={m.teamA.logoUrl} className="w-8 h-8 object-contain" /><span className="font-black text-xs text-white/80">{m.teamA.name} vs {m.teamB.name}</span><img src={m.teamB.logoUrl} className="w-8 h-8 object-contain" />
+                          <img src={m.teamA.logoUrl} className="w-8 h-8 object-contain bg-white rounded p-0.5" /><span className="font-black text-xs text-white/80 italic uppercase">{m.teamA.name} vs {m.teamB.name}</span><img src={m.teamB.logoUrl} className="w-8 h-8 object-contain bg-white rounded p-0.5" />
                        </div>
                        <span className="text-[10px] font-black text-indigo-500 uppercase">{m.time} HS</span>
                     </button>
                   ))}
+                  {allMatches.length === 0 && <div className="text-center py-20 text-slate-800 font-black uppercase italic tracking-widest">NO HAY PARTIDOS PROGRAMADOS</div>}
                </div>
             </div>
           );
@@ -134,14 +137,15 @@ const App: React.FC = () => {
           const allMatches = tournaments.flatMap(t => t.groups?.flatMap(g => g.matches) || []);
           return (
             <div className="p-8 max-w-4xl mx-auto space-y-8 animate-pop">
-               <h2 className="text-3xl font-black italic uppercase text-center text-white">CENTRO DE TRANSMISIÓN</h2>
+               <h2 className="text-3xl font-black italic uppercase text-center text-white leading-none tracking-tighter">CENTRO DE TRANSMISIÓN</h2>
                <div className="grid grid-cols-1 gap-4">
                   {allMatches.map(m => (
                     <div key={m.id} className="bg-slate-900 border border-white/5 p-8 rounded-[2rem] flex items-center justify-between shadow-xl gap-6">
-                       <div className="flex items-center gap-8"><div className="flex flex-col items-center gap-2"><img src={m.teamA.logoUrl} className="w-12 h-12 object-contain" /><span className="text-sm font-black italic uppercase">{m.teamA.name}</span></div><span className="text-2xl font-black italic text-indigo-500">VS</span><div className="flex flex-col items-center gap-2"><img src={m.teamB.logoUrl} className="w-12 h-12 object-contain" /><span className="text-sm font-black italic uppercase">{m.teamB.name}</span></div></div>
-                       <button onClick={() => setActiveMatch(m)} className="bg-red-600 hover:bg-red-500 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl">VER VIVO</button>
+                       <div className="flex items-center gap-8"><div className="flex flex-col items-center gap-2"><img src={m.teamA.logoUrl} className="w-12 h-12 object-contain bg-white rounded-lg p-1" /><span className="text-sm font-black italic uppercase text-white/80">{m.teamA.name}</span></div><span className="text-2xl font-black italic text-indigo-500">VS</span><div className="flex flex-col items-center gap-2"><img src={m.teamB.logoUrl} className="w-12 h-12 object-contain bg-white rounded-lg p-1" /><span className="text-sm font-black italic uppercase text-white/80">{m.teamB.name}</span></div></div>
+                       <button onClick={() => setActiveMatch(m)} className="bg-red-600 hover:bg-red-500 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl transition-all">VER SEÑAL</button>
                     </div>
                   ))}
+                  {allMatches.length === 0 && <div className="text-center py-20 text-slate-800 font-black uppercase italic tracking-widest">SIN SEÑALES ACTIVAS</div>}
                </div>
             </div>
           );
@@ -159,7 +163,12 @@ const App: React.FC = () => {
         );
       case 'COACH_ROTATION':
         const coachTeam = teams.find(t => t.id === currentUser?.teamId) || teams[0];
+        if (!coachTeam) return <div className="p-10 text-center text-slate-700 font-black italic uppercase">DEBE REGISTRAR EQUIPOS PRIMERO</div>;
         return <CoachRotation team={coachTeam} currentRotation={activeMatch?.rotationA || []} onUpdateRotation={(rot) => { if (activeMatch) updateMatchState({...activeMatch, rotationA: rot}); }} />;
+      case 'GLOBAL_STATS':
+        return <StatsView teams={teams} tournaments={tournaments} />;
+      case 'USERS_MANAGEMENT':
+        return <UsersManagement users={users} setUsers={setUsers} />;
       default:
         return <HomeMenu role={currentUser?.role || UserRole.SPECTATOR} onSelectModule={setCurrentModule} />;
     }
@@ -183,11 +192,11 @@ const App: React.FC = () => {
       {!hideNav && (
         <div className="flex-none bg-slate-900 border-t border-white/10 p-4 z-[300] backdrop-blur-2xl">
           <div className="max-w-7xl mx-auto flex justify-end gap-4">
-            <button onClick={() => setShowConfigMenu(!showConfigMenu)} className="bg-indigo-600 px-7 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl flex items-center gap-3">MENÚ</button>
+            <button onClick={() => setShowConfigMenu(!showConfigMenu)} className="bg-indigo-600 px-7 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl flex items-center gap-3 active:scale-95 transition-all">MENÚ</button>
             {showConfigMenu && (
-              <div className="absolute bottom-full right-4 mb-4 w-60 bg-slate-900 border border-white/10 rounded-3xl shadow-2xl p-2 animate-pop flex flex-col gap-1">
-                <button onClick={() => { setCurrentUser(null); setCurrentModule(null); setActiveMatch(null); localStorage.removeItem('jsport_session'); setShowConfigMenu(false); }} className="w-full text-left px-5 py-3 rounded-2xl hover:bg-red-600/20 text-red-500 font-black text-[9px] uppercase">CERRAR SESIÓN</button>
-                <button onClick={() => { if(confirm("¿Resetear datos?")){ localStorage.clear(); window.location.reload(); } }} className="w-full text-left px-5 py-3 rounded-2xl hover:bg-white/5 text-slate-400 font-black text-[9px] uppercase">RESETEAR SISTEMA</button>
+              <div className="absolute bottom-full right-4 mb-4 w-60 bg-slate-900 border border-white/10 rounded-[2rem] shadow-3xl p-2 animate-pop flex flex-col gap-1 backdrop-blur-3xl">
+                <button onClick={() => { setCurrentUser(null); setCurrentModule(null); setActiveMatch(null); localStorage.removeItem('jsport_session'); setShowConfigMenu(false); }} className="w-full text-left px-5 py-4 rounded-2xl hover:bg-red-600/20 text-red-500 font-black text-[9px] uppercase tracking-widest">CERRAR SESIÓN</button>
+                <button onClick={() => { if(confirm("¿Resetear base de datos local?")){ localStorage.clear(); window.location.reload(); } }} className="w-full text-left px-5 py-4 rounded-2xl hover:bg-white/5 text-slate-400 font-black text-[9px] uppercase tracking-widest">LIMPIAR DATOS</button>
               </div>
             )}
           </div>

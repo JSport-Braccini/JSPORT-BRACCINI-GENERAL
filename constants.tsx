@@ -10,7 +10,6 @@ const createMockPlayer = (id: string, name: string, num: number, pos: any): Play
   stats: { attacks: 0, blocks: 0, aces: 0, errors: 0, totalPoints: 0 }
 });
 
-// Added missing delegate property
 export const MOCK_TEAM_A: Team = {
   id: 'team-a',
   name: 'Águilas del Norte',
@@ -28,7 +27,6 @@ export const MOCK_TEAM_A: Team = {
   ]
 };
 
-// Added missing delegate property
 export const MOCK_TEAM_B: Team = {
   id: 'team-b',
   name: 'Tiburones del Sur',
@@ -46,7 +44,6 @@ export const MOCK_TEAM_B: Team = {
   ]
 };
 
-// Added missing 'time', 'activeOverlay', 'subsA', 'subsB', 'maxSets', 'pointsPerSet', and 'decidingSetPoints' properties to satisfy Match interface
 export const MOCK_MATCH: Match = {
   id: 'm1',
   teamA: MOCK_TEAM_A,
@@ -63,7 +60,6 @@ export const MOCK_MATCH: Match = {
   subsA: 6,
   subsB: 6,
   activeOverlay: 'NONE',
-  // Fix: Added missing required configuration properties
   maxSets: 3,
   pointsPerSet: 25,
   decidingSetPoints: 15

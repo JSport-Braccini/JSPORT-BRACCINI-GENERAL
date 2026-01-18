@@ -30,7 +30,7 @@ export const GroupPoster: React.FC<GroupPosterProps> = ({ group, tournament, onC
       link.click();
     } catch (error) {
       console.error(error);
-      alert("Error al generar el poster");
+      alert("Error al generar el póster");
     } finally {
       setIsExporting(false);
     }
@@ -44,14 +44,12 @@ export const GroupPoster: React.FC<GroupPosterProps> = ({ group, tournament, onC
           ref={posterRef} 
           className="relative w-full aspect-square bg-[#050a1f] overflow-hidden rounded-[3rem] flex flex-col items-center border border-white/10 shadow-2xl"
         >
-          {/* Fondo Abstracto de Voley */}
           <div className="absolute inset-0 z-0">
             <div className="absolute top-[-10%] left-[-10%] w-[100%] h-[100%] bg-indigo-600/20 blur-[130px] rounded-full"></div>
             <div className="absolute bottom-[-20%] right-[-10%] w-[90%] h-[90%] bg-blue-600/10 blur-[130px] rounded-full"></div>
             <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none">
                <h2 className="text-[25rem] font-black italic rotate-[20deg] uppercase leading-none tracking-tighter">VOLLEY</h2>
             </div>
-            {/* Red de voley abstracta */}
             <div className="absolute top-1/2 left-0 w-full h-24 bg-white/5 border-y border-white/10 flex items-center justify-center">
                <div className="w-full h-full opacity-20" style={{backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px'}}></div>
             </div>
@@ -65,7 +63,6 @@ export const GroupPoster: React.FC<GroupPosterProps> = ({ group, tournament, onC
             <h1 className="text-4xl md:text-5xl font-black text-white italic uppercase tracking-tighter drop-shadow-lg">TABLA DE GRUPO</h1>
           </div>
 
-          {/* Cuadro Central de Equipos */}
           <div className="relative z-10 flex-1 w-full px-12 md:px-20 py-8 flex items-center justify-center">
              <div className="w-full bg-slate-900/60 backdrop-blur-2xl rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl">
                 <div className="bg-indigo-600 p-4 text-center border-b border-white/10">
@@ -97,7 +94,7 @@ export const GroupPoster: React.FC<GroupPosterProps> = ({ group, tournament, onC
                   <img key={s.id} src={s.logoUrl} crossOrigin="anonymous" className="h-6 md:h-8 w-auto object-contain brightness-200" alt={s.name} />
                 ))}
              </div>
-             <div className="mt-8 text-white/10 font-black text-[8px] uppercase tracking-[1.5em] italic">JSPORT BROADCAST SYSTEM v2.5</div>
+             <div className="mt-8 text-white/10 font-black text-[8px] uppercase tracking-[1.5em] italic">SISTEMA DE TRANSMISIÓN JSPORT</div>
           </div>
         </div>
 

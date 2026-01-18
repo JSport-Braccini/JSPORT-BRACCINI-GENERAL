@@ -27,9 +27,7 @@ export const CoachRotation: React.FC<CoachRotationProps> = ({ team, currentRotat
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto">
-        {/* Rotation Grid */}
         <div className="bg-slate-800 p-8 rounded-3xl border border-slate-700 relative aspect-[4/3] flex items-center justify-center">
-          {/* Volleyball Court Lines Placeholder */}
           <div className="absolute inset-4 border-2 border-slate-600 opacity-20 pointer-events-none rounded"></div>
           
           <div className="grid grid-cols-3 grid-rows-2 gap-6 w-full max-w-sm">
@@ -56,13 +54,12 @@ export const CoachRotation: React.FC<CoachRotationProps> = ({ team, currentRotat
           </div>
         </div>
 
-        {/* Player List */}
         <div className="space-y-4">
           <h3 className="text-xl font-bold text-indigo-400 flex items-center gap-2">
              Plantilla de Jugadores
              <span className="text-xs bg-indigo-900/50 px-2 py-0.5 rounded-full">{currentRotation.length}/6</span>
           </h3>
-          <div className="grid grid-cols-2 gap-3 max-h-[500px] overflow-y-auto pr-2">
+          <div className="grid grid-cols-2 gap-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
             {team.players.map(p => (
               <button
                 key={p.id}

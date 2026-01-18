@@ -12,7 +12,6 @@ export const ParticipantsPoster: React.FC<ParticipantsPosterProps> = ({ tourname
   const posterRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
 
-  // Obtener todos los equipos únicos
   const allTeams = useMemo(() => {
     const teamsMap = new Map();
     tournament.groups.forEach(g => {
@@ -21,7 +20,6 @@ export const ParticipantsPoster: React.FC<ParticipantsPosterProps> = ({ tourname
     return Array.from(teamsMap.values());
   }, [tournament]);
 
-  // Obtener 4 jugadores aleatorios para el diseño
   const randomPlayers = useMemo(() => {
     const players: Player[] = [];
     allTeams.forEach(t => players.push(...t.players));
@@ -59,44 +57,37 @@ export const ParticipantsPoster: React.FC<ParticipantsPosterProps> = ({ tourname
           ref={posterRef} 
           className="relative w-full aspect-[4/5] bg-[#050a1f] overflow-hidden rounded-[3rem] border border-white/10 shadow-2xl flex flex-col items-center"
         >
-          {/* Fondo Abstracto de Voley */}
           <div className="absolute inset-0 z-0">
             <div className="absolute top-[-10%] left-[-10%] w-[100%] h-[100%] bg-indigo-600/20 blur-[130px] rounded-full"></div>
             <div className="absolute bottom-[-10%] right-[-10%] w-[80%] h-[80%] bg-blue-600/10 blur-[130px] rounded-full"></div>
             <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none overflow-hidden">
-               <h2 className="text-[22rem] font-black italic rotate-[-10deg] uppercase leading-none tracking-tighter">PLAYERS</h2>
+               <h2 className="text-[22rem] font-black italic rotate-[-10deg] uppercase leading-none tracking-tighter">JUGADORES</h2>
             </div>
             <div className="absolute top-1/2 left-0 w-full h-px bg-white/10"></div>
           </div>
 
-          {/* Jugadores Laterales (Layered con degradado y profundidad) */}
-          {/* Lado Izquierdo - Fondo */}
           {randomPlayers[0] && (
             <div className="absolute bottom-0 left-[-22%] w-[58%] h-[72%] opacity-30 z-10 scale-90 origin-bottom grayscale blur-[1px]">
               <img src={randomPlayers[0].imageUrl} crossOrigin="anonymous" className="h-full w-full object-cover side-mask-left" />
             </div>
           )}
-          {/* Lado Izquierdo - Frente */}
           {randomPlayers[1] && (
             <div className="absolute bottom-0 left-[-10%] w-[60%] h-[82%] opacity-90 z-30 origin-bottom">
               <img src={randomPlayers[1].imageUrl} crossOrigin="anonymous" className="h-full w-full object-cover side-mask-left" />
             </div>
           )}
           
-          {/* Lado Derecho - Fondo */}
           {randomPlayers[2] && (
             <div className="absolute bottom-0 right-[-22%] w-[58%] h-[72%] opacity-30 z-10 scale-90 origin-bottom grayscale blur-[1px]">
               <img src={randomPlayers[2].imageUrl} crossOrigin="anonymous" className="h-full w-full object-cover side-mask-right" />
             </div>
           )}
-          {/* Lado Derecho - Frente */}
           {randomPlayers[3] && (
             <div className="absolute bottom-0 right-[-10%] w-[60%] h-[82%] opacity-90 z-30 origin-bottom">
               <img src={randomPlayers[3].imageUrl} crossOrigin="anonymous" className="h-full w-full object-cover side-mask-right" />
             </div>
           )}
 
-          {/* Header Central */}
           <div className="relative z-40 w-full pt-12 flex flex-col items-center text-center px-10">
             <img src={tournament.logoUrl} crossOrigin="anonymous" className="h-28 md:h-36 w-auto object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.8)] mb-4" />
             <div className="bg-indigo-600 px-8 py-1.5 rounded-full border border-white/20 shadow-2xl mb-3 mt-4">
@@ -116,7 +107,6 @@ export const ParticipantsPoster: React.FC<ParticipantsPosterProps> = ({ tourname
             </div>
           </div>
 
-          {/* Cuadrícula de Equipos */}
           <div className="relative z-40 flex-1 w-full px-12 md:px-16 py-10 flex items-center justify-center">
              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full max-h-full overflow-hidden">
                 {allTeams.slice(0, 9).map((team) => (
@@ -135,22 +125,20 @@ export const ParticipantsPoster: React.FC<ParticipantsPosterProps> = ({ tourname
              </div>
           </div>
 
-          {/* Footer Sponsors */}
           <div className="relative z-50 w-full px-10 pb-12 flex flex-col items-center bg-gradient-to-t from-[#050a1f] via-[#050a1f]/80 to-transparent">
              <div className="flex flex-wrap justify-center items-center gap-8 md:gap-10">
                 {tournament.sponsors?.slice(0, 5).map(s => (
                   <img key={s.id} src={s.logoUrl} crossOrigin="anonymous" className="h-6 md:h-8 w-auto object-contain brightness-200" alt={s.name} />
                 ))}
              </div>
-             <div className="mt-8 text-white/10 font-black text-[7px] md:text-[8px] uppercase tracking-[1.5em] italic">JSPORT BROADCAST SYSTEM v2.5</div>
+             <div className="mt-8 text-white/10 font-black text-[7px] md:text-[8px] uppercase tracking-[1.5em] italic">SISTEMA DE TRANSMISIÓN JSPORT</div>
           </div>
         </div>
 
-        {/* Action Controls */}
         <div className="flex gap-4">
           <button onClick={onClose} className="flex-1 bg-slate-900 border border-white/10 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest">VOLVER</button>
           <button onClick={handleDownload} disabled={isExporting} className="flex-[3] bg-indigo-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl flex items-center justify-center gap-3">
-            {isExporting ? <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div> : 'DESCARGAR POSTER PNG'}
+            {isExporting ? <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div> : 'DESCARGAR PÓSTER PNG'}
           </button>
         </div>
       </div>
